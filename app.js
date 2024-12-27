@@ -175,10 +175,12 @@ class ExpiringPhotosApp {
     }
 
     async deletePhoto(photoId) {
-        let photos = await this.getPhotos();
-        photos = photos.filter(photo => photo.id !== photoId);
-        localStorage.setItem('expiring-photos', JSON.stringify(photos));
-        this.loadPhotos();
+        if (confirm('Are you sure you want to delete this photo? This action cannot be undone.')) {
+            let photos = await this.getPhotos();
+            photos = photos.filter(photo => photo.id !== photoId);
+            localStorage.setItem('expiring-photos', JSON.stringify(photos));
+            this.loadPhotos();
+        }
     }
 }
 
