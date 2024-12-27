@@ -1,6 +1,6 @@
-# Expiring Photos PWA
+# TempPhoto
 
-A Progressive Web App that allows you to take photos that expire after a set time period. Features include:
+A Progressive Web App that lets you take photos that automatically expire after a set time period. Features include:
 
 - Take photos using your device camera
 - Set expiration times (1 day, 1 week, 1 month, 1 year, or custom)
