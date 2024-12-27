@@ -130,6 +130,43 @@ class ExpiringPhotosApp {
         });
     }
 
+    formatRelativeTime(timestamp) {
+        const now = Date.now();
+        const diff = timestamp - now;
+        
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const months = Math.floor(days / 30);
+        const years = Math.floor(days / 365);
+
+        if (years > 0) {
+            return `${years} ${years === 1 ? 'year' : 'years'}`;
+        } else if (months > 0) {
+            return `${months} ${months === 1 ? 'month' : 'months'}`;
+        } else if (days > 0) {
+            return `${days} ${days === 1 ? 'day' : 'days'}`;
+        } else if (hours > 0) {
+            return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+        } else if (minutes > 0) {
+            return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+        } else {
+            return `${Math.max(0, seconds)} seconds`;
+        }
+    }
+
+    formatDateTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
     createPhotoCard(photo) {
         const card = document.createElement('div');
         card.className = 'photo-card';
@@ -141,9 +178,13 @@ class ExpiringPhotosApp {
         const info = document.createElement('div');
         info.className = 'photo-info';
         
-        const expiryDate = new Date(photo.expiryDate);
+        const relativeTime = this.formatRelativeTime(photo.expiryDate);
+        const creationTime = this.formatDateTime(photo.timestamp);
         info.innerHTML = `
-            <p>Expires: ${expiryDate.toLocaleString()}</p>
+            <div class="photo-time-info">
+                <p class="expiry-time">Expires in: ${relativeTime}</p>
+                <p class="creation-time">Taken: ${creationTime}</p>
+            </div>
         `;
 
         const actions = document.createElement('div');
