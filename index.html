@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expiring Photos</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Expiring Photos</h1>
+            <nav>
+                <button id="cameraButton" class="nav-button active">
+                    <span class="material-icons">camera_alt</span>
+                    Camera
+                </button>
+                <button id="galleryButton" class="nav-button">
+                    <span class="material-icons">photo_library</span>
+                    Gallery
+                </button>
+            </nav>
+        </header>
+
+        <main>
+            <div id="cameraView" class="view active">
+                <div class="camera-container">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    <div class="camera-controls">
+                        <select id="expirySelect" class="expiry-select">
+                            <option value="86400000">1 Day</option>
+                            <option value="604800000">1 Week</option>
+                            <option value="2592000000">1 Month</option>
+                            <option value="31536000000">1 Year</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <div id="customExpiryContainer" style="display: none;">
+                            <input type="datetime-local" id="customExpiry">
+                        </div>
+                        <button id="captureButton" class="capture-button">
+                            <span class="material-icons">camera</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="galleryView" class="view">
+                <div class="gallery-grid" id="photoGallery">
+                    <!-- Photos will be dynamically added here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => console.log('ServiceWorker registered'))
+                .catch(error => console.log('ServiceWorker registration failed:', error));
+        }
+    </script>
+</body>
+</html>
