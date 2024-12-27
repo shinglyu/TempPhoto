@@ -6,34 +6,29 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: #000;
+    color: #fff;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
 }
 
 .app-container {
-    max-width: 100%;
-    min-height: 100vh;
+    height: 100vh;
+    width: 100vw;
     display: flex;
     flex-direction: column;
 }
 
-header {
-    background-color: #2196F3;
-    color: white;
-    padding: 1rem;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-h1 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-}
-
-nav {
+.main-nav {
     display: flex;
     justify-content: center;
     gap: 1rem;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
 }
 
 .nav-button {
@@ -56,11 +51,13 @@ nav {
 
 main {
     flex: 1;
-    padding: 1rem;
+    position: relative;
+    overflow: hidden;
 }
 
 .view {
     display: none;
+    height: 100%;
 }
 
 .view.active {
@@ -68,22 +65,33 @@ main {
 }
 
 .camera-container {
-    max-width: 600px;
-    margin: 0 auto;
+    height: 100%;
+    width: 100%;
     position: relative;
 }
 
 video {
     width: 100%;
-    border-radius: 8px;
-    background-color: #000;
+    height: 100%;
+    object-fit: cover;
 }
 
 .camera-controls {
-    margin-top: 1rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    z-index: 10;
+}
+
+.control-panel {
+    max-width: 600px;
+    margin: 0 auto;
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
 }
 
@@ -91,14 +99,14 @@ video {
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background-color: #2196F3;
+    background-color: #fff;
     border: none;
-    color: white;
+    color: #000;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
 }
 
@@ -107,10 +115,33 @@ video {
 }
 
 .expiry-select {
+    padding: 0.75rem;
+    border-radius: 24px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    font-size: 1rem;
+    min-width: 120px;
+}
+
+#customExpiryContainer {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+#customExpiry {
     padding: 0.5rem;
     border-radius: 4px;
-    border: 1px solid #ddd;
-    font-size: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
 }
 
 .gallery-grid {
@@ -118,13 +149,15 @@ video {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1rem;
     padding: 1rem;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .photo-card {
-    background: white;
+    background: #1a1a1a;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .photo-card img {
@@ -135,31 +168,28 @@ video {
 
 .photo-info {
     padding: 1rem;
+    color: #fff;
 }
 
 .photo-actions {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 1rem;
-    background: #f8f8f8;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .photo-actions button {
     background: none;
     border: none;
-    color: #2196F3;
+    color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
 }
 
-#customExpiryContainer {
-    margin-top: 0.5rem;
-}
-
-#customExpiry {
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #ddd;
+.photo-actions button:hover {
+    opacity: 1;
 }
