@@ -95,11 +95,16 @@ class ExpiringPhotosApp {
 
     async initializeCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' }, 
-                audio: false 
-            });
+            const constraints = {
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 2560 },  
+                    height: { ideal: 1440 }  
+                }
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.video.srcObject = stream;
+            this.stream = stream;
         } catch (error) {
             console.error('Error accessing camera:', error);
             alert('Unable to access camera. Please ensure you have granted camera permissions.');
@@ -143,23 +148,28 @@ class ExpiringPhotosApp {
         }
     }
 
-    async capturePhoto() {
-        const context = this.canvas.getContext('2d');
+    capturePhoto() {
+        // Set canvas size to match video dimensions
         this.canvas.width = this.video.videoWidth;
         this.canvas.height = this.video.videoHeight;
+        
+        // Draw the video frame to the canvas
+        const context = this.canvas.getContext('2d');
         context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+        
+        // Convert to high quality JPEG
+        const imageData = this.canvas.toDataURL('image/jpeg', 0.95);  
 
-        const photoData = this.canvas.toDataURL('image/jpeg');
         const expiryDate = this.getExpiryDate();
 
         const photo = {
             id: Date.now().toString(),
-            data: photoData,
+            data: imageData,
             timestamp: Date.now(),
             expiryDate: expiryDate
         };
 
-        await this.savePhoto(photo);
+        this.savePhoto(photo);
         this.switchView('gallery');
     }
 
