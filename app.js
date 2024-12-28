@@ -155,7 +155,6 @@ class ExpiringPhotosApp {
         this.infoButton = document.getElementById('infoButton');
         this.infoPopup = document.getElementById('infoPopup');
         this.closeInfoButton = document.getElementById('closeInfoButton');
-        this.checkUpdateButton = document.getElementById('checkUpdateButton');
 
         // Camera elements
         this.video = document.getElementById('video');
@@ -183,7 +182,6 @@ class ExpiringPhotosApp {
         // Info popup handlers
         this.infoButton.addEventListener('click', () => this.openInfoPopup());
         this.closeInfoButton.addEventListener('click', () => this.closeInfoPopup());
-        this.checkUpdateButton.addEventListener('click', () => this.checkForUpdates());
 
         // Close popup when clicking outside
         this.infoPopup.addEventListener('click', (e) => {
@@ -431,46 +429,6 @@ class ExpiringPhotosApp {
     closeInfoPopup() {
         this.infoPopup.classList.remove('active');
         document.body.style.overflow = '';
-    }
-
-    async checkForUpdates() {
-        if ('serviceWorker' in navigator) {
-            try {
-                // Show loading state
-                const updateButton = document.getElementById('checkUpdateButton');
-                const originalText = updateButton.innerHTML;
-                updateButton.innerHTML = '<span class="material-icons rotating">sync</span> Checking...';
-                updateButton.disabled = true;
-
-                // Get all service worker registrations
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                
-                // Unregister all existing service workers
-                await Promise.all(registrations.map(registration => registration.unregister()));
-                
-                // Clear all caches
-                const cacheKeys = await caches.keys();
-                await Promise.all(cacheKeys.map(key => caches.delete(key)));
-
-                // Register new service worker
-                const newRegistration = await navigator.serviceWorker.register('service-worker.js');
-                await newRegistration.update();
-
-                // Show success message
-                updateButton.innerHTML = '<span class="material-icons">check</span> Updated!';
-                setTimeout(() => {
-                    alert('App updated successfully! The page will reload.');
-                    window.location.reload(true);
-                }, 500);
-            } catch (error) {
-                console.error('Error updating app:', error);
-                alert('Failed to update app. Please try again later.');
-                
-                // Reset button state
-                updateButton.innerHTML = originalText;
-                updateButton.disabled = false;
-            }
-        }
     }
 }
 
