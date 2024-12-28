@@ -4,6 +4,11 @@ class ExpiringPhotosApp {
         this.initializeEventListeners();
         this.initializeCamera();
         this.loadPhotos();
+        
+        // Add visibility change and blur handlers
+        document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+        window.addEventListener('blur', () => this.stopCamera());
+        window.addEventListener('focus', () => this.handleFocus());
     }
 
     initializeElements() {
@@ -63,11 +68,7 @@ class ExpiringPhotosApp {
             this.cameraButton.classList.remove('active');
             this.galleryButton.classList.add('active');
             // Stop the camera stream when switching to gallery
-            if (this.video.srcObject) {
-                const tracks = this.video.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-                this.video.srcObject = null;
-            }
+            this.stopCamera();
             this.loadPhotos();
         }
     }
@@ -229,6 +230,32 @@ class ExpiringPhotosApp {
             photos = photos.filter(photo => photo.id !== photoId);
             localStorage.setItem('expiring-photos', JSON.stringify(photos));
             this.loadPhotos();
+        }
+    }
+
+    stopCamera() {
+        if (this.video.srcObject) {
+            const tracks = this.video.srcObject.getTracks();
+            tracks.forEach(track => track.stop());
+            this.video.srcObject = null;
+        }
+    }
+
+    handleVisibilityChange() {
+        if (document.hidden) {
+            this.stopCamera();
+        } else {
+            // Only restart camera if we're in camera view
+            if (this.cameraView.classList.contains('active')) {
+                this.initializeCamera();
+            }
+        }
+    }
+
+    handleFocus() {
+        // Only restart camera if we're in camera view
+        if (this.cameraView.classList.contains('active')) {
+            this.initializeCamera();
         }
     }
 }
