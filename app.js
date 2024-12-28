@@ -55,11 +55,19 @@ class ExpiringPhotosApp {
             this.galleryView.classList.remove('active');
             this.cameraButton.classList.add('active');
             this.galleryButton.classList.remove('active');
+            // Reinitialize camera when switching back to camera view
+            this.initializeCamera();
         } else {
             this.cameraView.classList.remove('active');
             this.galleryView.classList.add('active');
             this.cameraButton.classList.remove('active');
             this.galleryButton.classList.add('active');
+            // Stop the camera stream when switching to gallery
+            if (this.video.srcObject) {
+                const tracks = this.video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                this.video.srcObject = null;
+            }
             this.loadPhotos();
         }
     }
