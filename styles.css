@@ -411,3 +411,25 @@ video {
 .update-button .material-icons {
     font-size: 20px;
 }
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rotating {
+    animation: rotate 1s linear infinite;
+}
+
+.update-button:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+.update-button:disabled:hover {
+    background-color: #2196f3;
+}

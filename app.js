@@ -354,25 +354,39 @@ class ExpiringPhotosApp {
     async checkForUpdates() {
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.ready;
+                // Show loading state
+                const updateButton = document.getElementById('checkUpdateButton');
+                const originalText = updateButton.innerHTML;
+                updateButton.innerHTML = '<span class="material-icons rotating">sync</span> Checking...';
+                updateButton.disabled = true;
+
+                // Get all service worker registrations
+                const registrations = await navigator.serviceWorker.getRegistrations();
                 
-                // Update the service worker
-                await registration.update();
+                // Unregister all existing service workers
+                await Promise.all(registrations.map(registration => registration.unregister()));
                 
-                // Force reload all resources
-                window.location.reload(true);
-                
-                // Clear cache
-                const cacheNames = await caches.keys();
-                await Promise.all(
-                    cacheNames.map(cacheName => caches.delete(cacheName))
-                );
-                
-                alert('App updated successfully! The page will reload.');
-                window.location.reload(true);
+                // Clear all caches
+                const cacheKeys = await caches.keys();
+                await Promise.all(cacheKeys.map(key => caches.delete(key)));
+
+                // Register new service worker
+                const newRegistration = await navigator.serviceWorker.register('service-worker.js');
+                await newRegistration.update();
+
+                // Show success message
+                updateButton.innerHTML = '<span class="material-icons">check</span> Updated!';
+                setTimeout(() => {
+                    alert('App updated successfully! The page will reload.');
+                    window.location.reload(true);
+                }, 500);
             } catch (error) {
                 console.error('Error updating app:', error);
                 alert('Failed to update app. Please try again later.');
+                
+                // Reset button state
+                updateButton.innerHTML = originalText;
+                updateButton.disabled = false;
             }
         }
     }
