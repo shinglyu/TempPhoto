@@ -17,6 +17,10 @@ class ExpiringPhotosApp {
         this.galleryButton = document.getElementById('galleryButton');
         this.cameraView = document.getElementById('cameraView');
         this.galleryView = document.getElementById('galleryView');
+        this.infoButton = document.getElementById('infoButton');
+        this.infoPopup = document.getElementById('infoPopup');
+        this.closeInfoButton = document.getElementById('closeInfoButton');
+        this.checkUpdateButton = document.getElementById('checkUpdateButton');
 
         // Camera elements
         this.video = document.getElementById('video');
@@ -40,6 +44,30 @@ class ExpiringPhotosApp {
         this.galleryButton.addEventListener('click', () => this.switchView('gallery'));
         this.captureButton.addEventListener('click', () => this.capturePhoto());
         this.expirySelect.addEventListener('change', () => this.handleExpiryChange());
+
+        // Info popup handlers
+        this.infoButton.addEventListener('click', () => this.openInfoPopup());
+        this.closeInfoButton.addEventListener('click', () => this.closeInfoPopup());
+        this.checkUpdateButton.addEventListener('click', () => this.checkForUpdates());
+
+        // Close popup when clicking outside
+        this.infoPopup.addEventListener('click', (e) => {
+            if (e.target === this.infoPopup) {
+                this.closeInfoPopup();
+            }
+        });
+
+        // Handle escape key for info popup
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (this.infoPopup.classList.contains('active')) {
+                    this.closeInfoPopup();
+                }
+                if (this.fullscreenViewer && this.fullscreenViewer.classList.contains('active')) {
+                    this.closeFullscreenViewer();
+                }
+            }
+        });
 
         // Only add fullscreen viewer listeners if elements exist
         if (this.fullscreenViewer && this.closeViewer) {
@@ -301,6 +329,42 @@ class ExpiringPhotosApp {
             this.fullscreenViewer.classList.remove('active');
         }
         document.body.style.overflow = ''; // Restore scrolling
+    }
+
+    openInfoPopup() {
+        this.infoPopup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeInfoPopup() {
+        this.infoPopup.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    async checkForUpdates() {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                
+                // Update the service worker
+                await registration.update();
+                
+                // Force reload all resources
+                window.location.reload(true);
+                
+                // Clear cache
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(cacheName => caches.delete(cacheName))
+                );
+                
+                alert('App updated successfully! The page will reload.');
+                window.location.reload(true);
+            } catch (error) {
+                console.error('Error updating app:', error);
+                alert('Failed to update app. Please try again later.');
+            }
+        }
     }
 }
 

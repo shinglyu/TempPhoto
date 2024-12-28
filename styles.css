@@ -21,14 +21,37 @@ body {
 }
 
 .main-nav {
+    background-color: #1a1a1a;
+    padding: 1rem;
     display: flex;
-    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.nav-buttons {
+    display: flex;
     gap: 1rem;
+    margin: 0 auto;
+}
+
+.info-button {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: white;
     padding: 0.5rem;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 100;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.info-button:hover {
+    opacity: 1;
 }
 
 .nav-button {
@@ -309,4 +332,102 @@ video {
 
 .close-button .material-icons {
     font-size: 24px;
+}
+
+.info-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.info-popup.active {
+    display: flex;
+}
+
+.info-popup-content {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.info-popup h2 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.info-popup h3 {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.info-popup p {
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.info-popup a {
+    color: #2196f3;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.info-popup a:hover {
+    opacity: 0.8;
+}
+
+.close-info-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.close-info-button:hover {
+    opacity: 1;
+}
+
+.info-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.update-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.update-button:hover {
+    background-color: #1976d2;
+}
+
+.update-button .material-icons {
+    font-size: 20px;
 }

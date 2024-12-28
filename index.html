@@ -11,15 +11,44 @@
 <body>
     <div class="app-container">
         <nav class="main-nav">
-            <button id="cameraButton" class="nav-button active">
-                <span class="material-icons">camera_alt</span>
-                Camera
-            </button>
-            <button id="galleryButton" class="nav-button">
-                <span class="material-icons">photo_library</span>
-                Gallery
+            <div class="nav-buttons">
+                <button id="cameraButton" class="nav-button active">
+                    <span class="material-icons">camera_alt</span>
+                    Camera
+                </button>
+                <button id="galleryButton" class="nav-button">
+                    <span class="material-icons">photo_library</span>
+                    Gallery
+                </button>
+            </div>
+            <button id="infoButton" class="info-button">
+                <span class="material-icons">info</span>
             </button>
         </nav>
+
+        <!-- Info popup -->
+        <div id="infoPopup" class="info-popup">
+            <div class="info-popup-content">
+                <button id="closeInfoButton" class="close-info-button">
+                    <span class="material-icons">close</span>
+                </button>
+                <h2>About TempPhoto</h2>
+                <p>A privacy-focused photo app that automatically deletes your photos after they expire.</p>
+                
+                <h3>Privacy</h3>
+                <p>All photos are stored locally on your device. No data is ever sent to any server. Photos are automatically deleted when they expire.</p>
+                
+                <h3>Author</h3>
+                <p>Created by <a href="https://shinglyu.com" target="_blank" rel="noopener noreferrer">Shing Lyu</a></p>
+                
+                <div class="info-actions">
+                    <button id="checkUpdateButton" class="update-button">
+                        <span class="material-icons">system_update</span>
+                        Check for Updates
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <main>
             <div id="cameraView" class="view active">
