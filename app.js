@@ -1,14 +1,149 @@
 class ExpiringPhotosApp {
     constructor() {
-        this.initializeElements();
-        this.initializeEventListeners();
-        this.initializeCamera();
-        this.loadPhotos();
+        this.DB_NAME = 'TempPhotoDB';
+        this.STORE_NAME = 'photos';
+        this.db = null;
         
-        // Add visibility change and blur handlers
-        document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
-        window.addEventListener('blur', () => this.stopCamera());
-        window.addEventListener('focus', () => this.handleFocus());
+        this.initializeDB().then(() => {
+            this.initializeElements();
+            this.initializeEventListeners();
+            this.initializeCamera();
+            this.loadPhotos();
+            
+            // Add visibility change and blur handlers
+            document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+            window.addEventListener('blur', () => this.stopCamera());
+            window.addEventListener('focus', () => this.handleFocus());
+        }).catch(error => {
+            console.error('Failed to initialize database:', error);
+            alert('Failed to initialize database. The app may not work properly.');
+        });
+    }
+
+    async initializeDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.DB_NAME, 1);
+
+            request.onerror = () => reject(request.error);
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+                    const store = db.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
+                    store.createIndex('expiryDate', 'expiryDate');
+                }
+            };
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve();
+            };
+        });
+    }
+
+    async savePhoto(photo) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
+            
+            transaction.onerror = (event) => {
+                console.error('Transaction error:', event.target.error);
+                if (event.target.error.name === 'QuotaExceededError') {
+                    reject(new Error('Not enough storage space. Please delete some photos and try again.'));
+                } else {
+                    reject(event.target.error);
+                }
+            };
+
+            const store = transaction.objectStore(this.STORE_NAME);
+            const request = store.add(photo);
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async capturePhoto() {
+        try {
+            // Set canvas size to match video dimensions
+            this.canvas.width = this.video.videoWidth;
+            this.canvas.height = this.video.videoHeight;
+            
+            // Draw the video frame to the canvas
+            const context = this.canvas.getContext('2d');
+            context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+            
+            // Convert to high quality JPEG
+            const imageData = this.canvas.toDataURL('image/jpeg', 0.95);
+
+            const photo = {
+                id: Date.now().toString(),
+                data: imageData,
+                timestamp: Date.now(),
+                expiryDate: this.getExpiryDate()
+            };
+
+            await this.savePhoto(photo);
+            this.switchView('gallery');
+        } catch (error) {
+            console.error('Error saving photo:', error);
+            alert(error.message || 'Failed to save photo. Please delete some photos and try again.');
+        }
+    }
+
+    async loadPhotos() {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.STORE_NAME], 'readonly');
+            const store = transaction.objectStore(this.STORE_NAME);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const photos = request.result;
+                this.displayPhotos(photos);
+                this.checkExpiredPhotos(photos);
+                resolve(photos);
+            };
+
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deletePhotoFromDB(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(this.STORE_NAME);
+            const request = store.delete(id);
+
+            request.onsuccess = () => {
+                this.loadPhotos();
+                resolve();
+            };
+
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deletePhoto(id) {
+        if (confirm('Are you sure you want to delete this photo? This action cannot be undone.')) {
+            try {
+                await this.deletePhotoFromDB(id);
+            } catch (error) {
+                console.error('Error deleting photo:', error);
+                alert('Failed to delete photo. Please try again.');
+            }
+        }
+    }
+
+    async checkExpiredPhotos(photos) {
+        const now = Date.now();
+        const expired = photos.filter(photo => photo.expiryDate <= now);
+        
+        for (const photo of expired) {
+            try {
+                await this.deletePhotoFromDB(photo.id);
+            } catch (error) {
+                console.error('Error deleting expired photo:', error);
+            }
+        }
     }
 
     initializeElements() {
@@ -148,51 +283,7 @@ class ExpiringPhotosApp {
         }
     }
 
-    capturePhoto() {
-        // Set canvas size to match video dimensions
-        this.canvas.width = this.video.videoWidth;
-        this.canvas.height = this.video.videoHeight;
-        
-        // Draw the video frame to the canvas
-        const context = this.canvas.getContext('2d');
-        context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-        
-        // Convert to high quality JPEG
-        const imageData = this.canvas.toDataURL('image/jpeg', 0.95);  
-
-        const expiryDate = this.getExpiryDate();
-
-        const photo = {
-            id: Date.now().toString(),
-            data: imageData,
-            timestamp: Date.now(),
-            expiryDate: expiryDate
-        };
-
-        this.savePhoto(photo);
-        this.switchView('gallery');
-    }
-
-    async savePhoto(photo) {
-        let photos = await this.getPhotos();
-        photos.push(photo);
-        localStorage.setItem('expiring-photos', JSON.stringify(photos));
-    }
-
-    async getPhotos() {
-        const photos = JSON.parse(localStorage.getItem('expiring-photos') || '[]');
-        const now = Date.now();
-        const validPhotos = photos.filter(photo => photo.expiryDate > now);
-        
-        if (validPhotos.length !== photos.length) {
-            localStorage.setItem('expiring-photos', JSON.stringify(validPhotos));
-        }
-        
-        return validPhotos;
-    }
-
-    async loadPhotos() {
-        const photos = await this.getPhotos();
+    displayPhotos(photos) {
         this.photoGallery.innerHTML = '';
 
         photos.sort((a, b) => b.timestamp - a.timestamp).forEach(photo => {
@@ -287,15 +378,6 @@ class ExpiringPhotosApp {
         link.href = photo.data;
         link.download = `photo-${new Date(photo.timestamp).toISOString()}.jpg`;
         link.click();
-    }
-
-    async deletePhoto(photoId) {
-        if (confirm('Are you sure you want to delete this photo? This action cannot be undone.')) {
-            let photos = await this.getPhotos();
-            photos = photos.filter(photo => photo.id !== photoId);
-            localStorage.setItem('expiring-photos', JSON.stringify(photos));
-            this.loadPhotos();
-        }
     }
 
     stopCamera() {
