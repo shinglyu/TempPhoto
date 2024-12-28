@@ -28,6 +28,11 @@ class ExpiringPhotosApp {
 
         // Gallery elements
         this.photoGallery = document.getElementById('photoGallery');
+
+        // Initialize fullscreen viewer elements if they exist
+        this.fullscreenViewer = document.getElementById('fullscreenViewer');
+        this.fullscreenImage = document.getElementById('fullscreenImage');
+        this.closeViewer = document.getElementById('closeViewer');
     }
 
     initializeEventListeners() {
@@ -35,6 +40,25 @@ class ExpiringPhotosApp {
         this.galleryButton.addEventListener('click', () => this.switchView('gallery'));
         this.captureButton.addEventListener('click', () => this.capturePhoto());
         this.expirySelect.addEventListener('change', () => this.handleExpiryChange());
+
+        // Only add fullscreen viewer listeners if elements exist
+        if (this.fullscreenViewer && this.closeViewer) {
+            this.closeViewer.addEventListener('click', () => this.closeFullscreenViewer());
+
+            // Close viewer when clicking outside the image
+            this.fullscreenViewer.addEventListener('click', (e) => {
+                if (e.target === this.fullscreenViewer) {
+                    this.closeFullscreenViewer();
+                }
+            });
+
+            // Handle escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.fullscreenViewer.classList.contains('active')) {
+                    this.closeFullscreenViewer();
+                }
+            });
+        }
 
         // Set minimum date-time for custom expiry
         const now = new Date();
@@ -183,6 +207,9 @@ class ExpiringPhotosApp {
         const img = document.createElement('img');
         img.src = photo.data;
         img.alt = 'Captured photo';
+        if (this.fullscreenViewer) {
+            img.addEventListener('click', () => this.openFullscreenViewer(photo.data));
+        }
 
         const info = document.createElement('div');
         info.className = 'photo-info';
@@ -257,6 +284,23 @@ class ExpiringPhotosApp {
         if (this.cameraView.classList.contains('active')) {
             this.initializeCamera();
         }
+    }
+
+    openFullscreenViewer(imageData) {
+        if (this.fullscreenImage) {
+            this.fullscreenImage.src = imageData;
+        }
+        if (this.fullscreenViewer) {
+            this.fullscreenViewer.classList.add('active');
+        }
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    closeFullscreenViewer() {
+        if (this.fullscreenViewer) {
+            this.fullscreenViewer.classList.remove('active');
+        }
+        document.body.style.overflow = ''; // Restore scrolling
     }
 }
 
