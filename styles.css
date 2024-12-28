@@ -93,37 +93,72 @@ video {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    padding: 0 1rem;
+}
+
+.expiry-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 150px;
+}
+
+.spacer {
+    width: 150px;
+}
+
+.expiry-select {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.expiry-select option {
+    background-color: #333;
+    color: white;
+}
+
+#customExpiryContainer input {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 1rem;
+}
+
+#customExpiryContainer input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
 }
 
 .capture-button {
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
-    background-color: #fff;
+    background-color: white;
     border: none;
-    color: #000;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .capture-button:active {
     transform: scale(0.95);
 }
 
-.expiry-select {
-    padding: 0.75rem;
-    border-radius: 24px;
-    border: none;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: white;
-    font-size: 1rem;
-    min-width: 120px;
+.capture-button .material-icons {
+    color: black;
+    font-size: 36px;
 }
 
 #customExpiryContainer {
@@ -134,14 +169,6 @@ video {
     background: rgba(0, 0, 0, 0.8);
     border-radius: 8px;
     margin-bottom: 0.5rem;
-}
-
-#customExpiry {
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
 }
 
 #galleryView {

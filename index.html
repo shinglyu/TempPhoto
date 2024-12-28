@@ -28,19 +28,22 @@
                     <canvas id="canvas" style="display: none;"></canvas>
                     <div class="camera-controls">
                         <div class="control-panel">
-                            <select id="expirySelect" class="expiry-select">
-                                <option value="86400000">1 Day</option>
-                                <option value="604800000">1 Week</option>
-                                <option value="2592000000">1 Month</option>
-                                <option value="31536000000">1 Year</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                            <div id="customExpiryContainer" style="display: none;">
-                                <input type="datetime-local" id="customExpiry">
+                            <div class="expiry-controls">
+                                <select id="expirySelect" class="expiry-select">
+                                    <option value="86400000">1 Day</option>
+                                    <option value="604800000">1 Week</option>
+                                    <option value="2592000000">1 Month</option>
+                                    <option value="31536000000">1 Year</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                                <div id="customExpiryContainer" style="display: none;">
+                                    <input type="datetime-local" id="customExpiry">
+                                </div>
                             </div>
                             <button id="captureButton" class="capture-button">
                                 <span class="material-icons">camera</span>
                             </button>
+                            <div class="spacer"></div>
                         </div>
                     </div>
                 </div>
