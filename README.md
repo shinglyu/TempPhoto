@@ -25,9 +25,13 @@ A Progressive Web App that lets you take photos that automatically expire after 
 3. Switch to the Gallery tab to view, download, or delete your photos
 4. Photos will automatically disappear when they expire
 
+## Demo
+
+Check out the live demo here: [Demo Link](https://shinglyu.com/TempPhoto/)
+
 ## Technical Details
 
 - Uses the MediaDevices API for camera access
-- Stores photos in localStorage (with base64 encoding)
+- Stores photos in IndexedDB (with base64 encoding)
 - Implements PWA features for offline use
 - Built with vanilla JavaScript, HTML, and CSS
