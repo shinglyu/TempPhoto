@@ -1,10 +1,10 @@
 const CACHE_NAME = 'expiring-photos-v1';
 const ASSETS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json',
+    './',
+    './index.html',
+    './styles.css',
+    './app.js',
+    './manifest.json',
     'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
 
