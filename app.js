@@ -6,6 +6,11 @@ class ExpiringPhotosApp {
         this.autoReturnTimeout = null;
         this.galleryLoaded = false;
         
+        // Camera toggle state: 'standard', 'wide', 'front'
+        this.currentCameraMode = 'standard';
+        this.cameraModes = ['standard', 'wide', 'front'];
+        this.currentModeIndex = 0;
+        
         // Initialize critical path immediately (non-blocking)
         this.initializeElements();
         this.initializeEventListeners();
@@ -182,6 +187,7 @@ class ExpiringPhotosApp {
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('canvas');
         this.captureButton = document.getElementById('captureButton');
+        this.cameraToggleButton = document.getElementById('cameraToggleButton');
         this.expirySelect = document.getElementById('expirySelect');
         this.customExpiryContainer = document.getElementById('customExpiryContainer');
         this.customExpiry = document.getElementById('customExpiry');
@@ -199,6 +205,7 @@ class ExpiringPhotosApp {
         this.cameraButton.addEventListener('click', () => this.switchView('camera'));
         this.galleryButton.addEventListener('click', () => this.switchView('gallery'));
         this.captureButton.addEventListener('click', () => this.capturePhoto());
+        this.cameraToggleButton.addEventListener('click', () => this.toggleCamera());
         this.expirySelect.addEventListener('change', () => this.handleExpiryChange());
 
         // Info popup handlers
@@ -250,23 +257,87 @@ class ExpiringPhotosApp {
 
     async initializeCamera() {
         try {
-            // Use simpler constraints for faster initialization
-            const constraints = {
-                video: {
-                    facingMode: 'environment'
-                    // Remove ideal resolution constraints for faster startup
-                    // High resolution can be requested later if needed
-                }
-            };
+            // Stop current camera stream before switching
+            this.stopCamera();
+            
+            // Get constraints based on current camera mode
+            const constraints = this.getCameraConstraints();
+            
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.video.srcObject = stream;
             this.stream = stream;
+            
+            // Update button text after successful camera initialization
+            this.updateCameraToggleButton();
             
             // Schedule service worker registration after camera is ready
             this.scheduleServiceWorkerRegistration();
         } catch (error) {
             console.error('Error accessing camera:', error);
-            alert('Unable to access camera. Please ensure you have granted camera permissions.');
+            // Try fallback if current mode fails
+            if (this.currentCameraMode !== 'standard') {
+                console.log('Falling back to standard camera');
+                this.currentCameraMode = 'standard';
+                this.currentModeIndex = 0;
+                this.initializeCamera();
+            } else {
+                alert('Unable to access camera. Please ensure you have granted camera permissions.');
+            }
+        }
+    }
+
+    getCameraConstraints() {
+        const constraints = {
+            video: {}
+        };
+
+        switch (this.currentCameraMode) {
+            case 'standard':
+                constraints.video = {
+                    facingMode: 'environment'
+                };
+                break;
+            case 'wide':
+                constraints.video = {
+                    facingMode: 'environment',
+                    zoom: { ideal: 0.5 }
+                };
+                break;
+            case 'front':
+                constraints.video = {
+                    facingMode: 'user'
+                };
+                break;
+        }
+
+        return constraints;
+    }
+
+    async toggleCamera() {
+        // Cycle to next camera mode
+        this.currentModeIndex = (this.currentModeIndex + 1) % this.cameraModes.length;
+        this.currentCameraMode = this.cameraModes[this.currentModeIndex];
+        
+        // Reinitialize camera with new mode
+        await this.initializeCamera();
+    }
+
+    updateCameraToggleButton() {
+        if (!this.cameraToggleButton) return;
+        
+        const icon = this.cameraToggleButton.querySelector('.icon');
+        if (!icon) return;
+
+        switch (this.currentCameraMode) {
+            case 'standard':
+                icon.textContent = '1.0x';
+                break;
+            case 'wide':
+                icon.textContent = '0.5x';
+                break;
+            case 'front':
+                icon.textContent = '🤳';
+                break;
         }
     }
 
