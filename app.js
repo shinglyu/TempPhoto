@@ -354,11 +354,11 @@ class ExpiringPhotosApp {
         actions.className = 'photo-actions';
 
         const downloadBtn = document.createElement('button');
-        downloadBtn.innerHTML = '<span class="material-icons">download</span> Download';
+        downloadBtn.innerHTML = '<span class="icon">💾</span> Download';
         downloadBtn.onclick = () => this.downloadPhoto(photo);
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = '<span class="material-icons">delete</span> Delete';
+        deleteBtn.innerHTML = '<span class="icon">🗑️</span> Delete';
         deleteBtn.onclick = () => this.deletePhoto(photo.id);
 
         actions.appendChild(downloadBtn);

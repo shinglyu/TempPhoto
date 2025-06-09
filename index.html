@@ -6,23 +6,22 @@
     <title>TempPhoto</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
         <nav class="main-nav">
             <div class="nav-buttons">
                 <button id="cameraButton" class="nav-button active">
-                    <span class="material-icons">camera_alt</span>
+                    <span class="icon">📷</span>
                     Camera
                 </button>
                 <button id="galleryButton" class="nav-button">
-                    <span class="material-icons">photo_library</span>
+                    <span class="icon">🖼️</span>
                     Gallery
                 </button>
             </div>
             <button id="infoButton" class="info-button">
-                <span class="material-icons">info</span>
+                <span class="icon">ℹ️</span>
             </button>
         </nav>
 
@@ -30,7 +29,7 @@
         <div id="infoPopup" class="info-popup">
             <div class="info-popup-content">
                 <button id="closeInfoButton" class="close-info-button">
-                    <span class="material-icons">close</span>
+                    <span class="icon">✕</span>
                 </button>
                 <h2>About TempPhoto</h2>
                 <p>A privacy-focused photo app that automatically deletes your photos after they expire.</p>
@@ -66,7 +65,7 @@
                                 </div>
                             </div>
                             <button id="captureButton" class="capture-button">
-                                <span class="material-icons">camera</span>
+                                <span class="icon">📸</span>
                             </button>
                             <div class="spacer"></div>
                         </div>
@@ -82,7 +81,7 @@
             <!-- Full screen image viewer -->
             <div id="fullscreenViewer" class="fullscreen-viewer">
                 <button id="closeViewer" class="close-button">
-                    <span class="material-icons">close</span>
+                    <span class="icon">✕</span>
                 </button>
                 <img id="fullscreenImage" alt="Full screen photo">
             </div>

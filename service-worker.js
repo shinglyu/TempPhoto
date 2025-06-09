@@ -4,8 +4,7 @@ const ASSETS_TO_CACHE = [
     './index.html',
     './styles.css',
     './app.js',
-    './manifest.json',
-    'https://fonts.googleapis.com/icon?family=Material+Icons'
+    './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
