@@ -5,7 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TempPhoto</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Critical CSS for immediate camera view rendering -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #000; color: #fff; height: 100vh; width: 100vw; overflow: hidden; 
+        }
+        .icon { font-style: normal; line-height: 1; display: inline-block; user-select: none; }
+        .app-container { height: 100vh; width: 100vw; display: flex; flex-direction: column; }
+        .main-nav { 
+            background-color: #1a1a1a; padding: 1rem; display: flex; align-items: center; 
+            position: relative; order: 2; 
+        }
+        .nav-buttons { display: flex; gap: 1rem; margin: 0 auto; }
+        .nav-button { 
+            background: none; border: none; color: white; padding: 0.5rem 1rem; cursor: pointer;
+            display: flex; align-items: center; gap: 0.5rem; opacity: 0.7; transition: opacity 0.3s;
+        }
+        .nav-button.active { opacity: 1; border-bottom: 2px solid white; }
+        main { flex: 1; position: relative; overflow: hidden; }
+        .view { display: none; height: 100%; }
+        .view.active { display: block; }
+        .camera-container { height: 100%; width: 100%; position: relative; }
+        video { width: 100%; height: 100%; object-fit: contain; }
+        .camera-controls { 
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem 1rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        }
+        .control-panel { 
+            display: flex; flex-direction: column; align-items: center; gap: 1rem; 
+            max-width: 600px; margin: 0 auto; 
+        }
+        .capture-button { 
+            width: 70px; height: 70px; border-radius: 50%; background-color: white; border: none;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;
+        }
+        .capture-button .icon { color: #1a1a1a; font-size: 32px; }
+        .expiry-controls { width: 150px; text-align: center; }
+        .expiry-select { 
+            background-color: rgba(255, 255, 255, 0.1); color: white; border: none; 
+            padding: 0.5rem; border-radius: 8px; cursor: pointer; font-size: 1rem; width: 100%;
+        }
+    </style>
+    
+    <!-- Load full styles asynchronously for non-critical features -->
+    <link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css"></noscript>
 </head>
 <body>
     <div class="app-container">
@@ -90,12 +137,5 @@
     </div>
 
     <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(registration => console.log('ServiceWorker registered'))
-                .catch(error => console.log('ServiceWorker registration failed:', error));
-        }
-    </script>
 </body>
 </html>

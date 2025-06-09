@@ -4,21 +4,26 @@ class ExpiringPhotosApp {
         this.STORE_NAME = 'photos';
         this.db = null;
         this.autoReturnTimeout = null;
+        this.galleryLoaded = false;
         
-        this.initializeDB().then(() => {
-            this.initializeElements();
-            this.initializeEventListeners();
-            this.initializeCamera();
-            this.loadPhotos();
-            
-            // Add visibility change and blur handlers
-            document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
-            window.addEventListener('blur', () => this.stopCamera());
-            window.addEventListener('focus', () => this.handleFocus());
-        }).catch(error => {
+        // Initialize critical path immediately (non-blocking)
+        this.initializeElements();
+        this.initializeEventListeners();
+        
+        // Start camera immediately for fastest time-to-camera
+        this.initializeCamera();
+        
+        // Initialize database in parallel (non-blocking)
+        this.initializeDB().catch(error => {
             console.error('Failed to initialize database:', error);
-            alert('Failed to initialize database. The app may not work properly.');
+            // Don't block the camera with an alert, just log the error
+            console.warn('Database unavailable - photos will not be saved');
         });
+        
+        // Add visibility change and blur handlers
+        document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+        window.addEventListener('blur', () => this.stopCamera());
+        window.addEventListener('focus', () => this.handleFocus());
     }
 
     async initializeDB() {
@@ -65,6 +70,17 @@ class ExpiringPhotosApp {
 
     async capturePhoto() {
         try {
+            // Ensure database is ready before saving
+            if (!this.db) {
+                try {
+                    await this.initializeDB();
+                } catch (dbError) {
+                    console.error('Database initialization failed during capture:', dbError);
+                    alert('Unable to save photo - database not available. Please try again.');
+                    return;
+                }
+            }
+
             // Set canvas size to match video dimensions
             this.canvas.width = this.video.videoWidth;
             this.canvas.height = this.video.videoHeight;
@@ -234,19 +250,34 @@ class ExpiringPhotosApp {
 
     async initializeCamera() {
         try {
+            // Use simpler constraints for faster initialization
             const constraints = {
                 video: {
-                    facingMode: 'environment',
-                    width: { ideal: 2560 },  
-                    height: { ideal: 1440 }  
+                    facingMode: 'environment'
+                    // Remove ideal resolution constraints for faster startup
+                    // High resolution can be requested later if needed
                 }
             };
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.video.srcObject = stream;
             this.stream = stream;
+            
+            // Schedule service worker registration after camera is ready
+            this.scheduleServiceWorkerRegistration();
         } catch (error) {
             console.error('Error accessing camera:', error);
             alert('Unable to access camera. Please ensure you have granted camera permissions.');
+        }
+    }
+
+    scheduleServiceWorkerRegistration() {
+        // Register service worker after camera is ready to avoid blocking camera initialization
+        if ('serviceWorker' in navigator) {
+            setTimeout(() => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => console.log('ServiceWorker registered'))
+                    .catch(error => console.log('ServiceWorker registration failed:', error));
+            }, 100);
         }
     }
 
@@ -271,8 +302,26 @@ class ExpiringPhotosApp {
             this.galleryButton.classList.add('active');
             // Stop the camera stream when switching to gallery
             this.stopCamera();
-            this.loadPhotos();
+            // Lazy load gallery content only when needed
+            this.ensureGalleryLoaded();
         }
+    }
+
+    async ensureGalleryLoaded() {
+        if (!this.galleryLoaded) {
+            // Wait for database to be ready
+            if (!this.db) {
+                try {
+                    await this.initializeDB();
+                } catch (error) {
+                    console.error('Database not available for gallery:', error);
+                    this.photoGallery.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Unable to load photos - database unavailable</p>';
+                    return;
+                }
+            }
+            this.galleryLoaded = true;
+        }
+        this.loadPhotos();
     }
 
     handleExpiryChange() {
