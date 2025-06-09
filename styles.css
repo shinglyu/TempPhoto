@@ -196,6 +196,7 @@ video {
     height: 100%;
     overflow-y: auto;
     align-items: start;
+    grid-auto-rows: max-content;
     padding-bottom: 2rem;
 }
 
@@ -206,17 +207,17 @@ video {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    height: 320px;
     margin-bottom: 0;
 }
 
 .photo-card img {
     width: 100%;
-    height: 240px;
-    object-fit: cover;
-    flex-shrink: 0;
+    object-fit: contain;
+    max-height: 400px;
+    min-height: 150px;
     cursor: pointer;
     transition: opacity 0.2s;
+    background-color: #111;
 }
 
 .photo-card img:hover {
