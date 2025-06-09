@@ -3,6 +3,7 @@ class ExpiringPhotosApp {
         this.DB_NAME = 'TempPhotoDB';
         this.STORE_NAME = 'photos';
         this.db = null;
+        this.autoReturnTimeout = null;
         
         this.initializeDB().then(() => {
             this.initializeElements();
@@ -83,7 +84,12 @@ class ExpiringPhotosApp {
             };
 
             await this.savePhoto(photo);
-            this.switchView('gallery');
+            this.switchView('gallery', false);
+            
+            // Automatically return to camera view after 3 seconds
+            this.autoReturnTimeout = setTimeout(() => {
+                this.switchView('camera', false);
+            }, 3000);
         } catch (error) {
             console.error('Error saving photo:', error);
             alert(error.message || 'Failed to save photo. Please delete some photos and try again.');
@@ -244,7 +250,13 @@ class ExpiringPhotosApp {
         }
     }
 
-    switchView(view) {
+    switchView(view, clearAutoReturn = true) {
+        // Clear any pending auto-return timeout only if this is a manual switch
+        if (clearAutoReturn && this.autoReturnTimeout) {
+            clearTimeout(this.autoReturnTimeout);
+            this.autoReturnTimeout = null;
+        }
+
         if (view === 'camera') {
             this.cameraView.classList.add('active');
             this.galleryView.classList.remove('active');
