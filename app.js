@@ -5,10 +5,11 @@ class ExpiringPhotosApp {
         this.db = null;
         this.autoReturnTimeout = null;
         this.galleryLoaded = false;
+        this.justCapturedPhoto = false;
         
-        // Camera toggle state: 'standard', 'wide', 'front'
-        this.currentCameraMode = 'standard';
-        this.cameraModes = ['standard', 'wide', 'front'];
+        // Camera toggle state: 'back', 'front'
+        this.currentCameraMode = 'back';
+        this.cameraModes = ['back', 'front'];
         this.currentModeIndex = 0;
         
         // Initialize critical path immediately (non-blocking)
@@ -105,12 +106,13 @@ class ExpiringPhotosApp {
             };
 
             await this.savePhoto(photo);
+            this.justCapturedPhoto = true;
             this.switchView('gallery', false);
             
-            // Automatically return to camera view after 3 seconds
+            // Automatically return to camera view after 5 seconds
             this.autoReturnTimeout = setTimeout(() => {
                 this.switchView('camera', false);
-            }, 3000);
+            }, 5000);
         } catch (error) {
             console.error('Error saving photo:', error);
             alert(error.message || 'Failed to save photo. Please delete some photos and try again.');
@@ -288,9 +290,9 @@ class ExpiringPhotosApp {
             } catch (fallbackError) {
                 console.error('Fallback camera also failed:', fallbackError);
                 // Try switching camera mode if current mode fails
-                if (this.currentCameraMode !== 'standard') {
-                    console.log('Falling back to standard camera mode');
-                    this.currentCameraMode = 'standard';
+                if (this.currentCameraMode !== 'back') {
+                    console.log('Falling back to back camera mode');
+                    this.currentCameraMode = 'back';
                     this.currentModeIndex = 0;
                     this.initializeCamera();
                 } else {
@@ -309,13 +311,8 @@ class ExpiringPhotosApp {
         };
 
         switch (this.currentCameraMode) {
-            case 'standard':
+            case 'back':
                 baseConstraints.video.facingMode = 'environment';
-                break;
-            case 'wide':
-                baseConstraints.video.facingMode = 'environment';
-                // Note: Wide-angle functionality can be enhanced in the future
-                // by detecting multiple cameras and selecting ultra-wide if available
                 break;
             case 'front':
                 baseConstraints.video.facingMode = 'user';
@@ -334,10 +331,7 @@ class ExpiringPhotosApp {
         };
 
         switch (this.currentCameraMode) {
-            case 'standard':
-                fallbackConstraints.video.facingMode = 'environment';
-                break;
-            case 'wide':
+            case 'back':
                 fallbackConstraints.video.facingMode = 'environment';
                 break;
             case 'front':
@@ -364,14 +358,11 @@ class ExpiringPhotosApp {
         if (!icon) return;
 
         switch (this.currentCameraMode) {
-            case 'standard':
-                icon.textContent = '1.0x';
-                break;
-            case 'wide':
-                icon.textContent = '0.5x';
+            case 'back':
+                icon.textContent = '📷';
                 break;
             case 'front':
-                icon.textContent = '🤳';
+                icon.textContent = '🔄';
                 break;
         }
     }
@@ -560,6 +551,9 @@ class ExpiringPhotosApp {
 
     async ensureGalleryLoaded() {
         if (!this.galleryLoaded) {
+            // Show loading indicator
+            this.showGalleryLoading();
+            
             // Wait for database to be ready
             if (!this.db) {
                 try {
@@ -572,7 +566,47 @@ class ExpiringPhotosApp {
             }
             this.galleryLoaded = true;
         }
+        
+        // Add placeholder for just captured photo if applicable
+        if (this.justCapturedPhoto) {
+            this.addNewPhotoPlaceholder();
+        }
+        
         this.loadPhotos();
+    }
+
+    showGalleryLoading() {
+        this.photoGallery.innerHTML = '<p style="text-align: center; color: #fff; padding: 3rem; font-size: 1.1rem;">Loading...</p>';
+    }
+
+    addNewPhotoPlaceholder() {
+        // Only add placeholder if we just captured a photo and it's not a manual gallery switch
+        const placeholder = document.createElement('div');
+        placeholder.className = 'photo-card placeholder-card';
+        placeholder.innerHTML = `
+            <div style="
+                width: 100%;
+                height: 200px;
+                background: rgba(255, 255, 255, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.9rem;
+                border-radius: 8px 8px 0 0;
+            ">
+                Loading...
+            </div>
+            <div class="photo-info">
+                <div class="photo-time-info">
+                    <p style="color: rgba(255, 255, 255, 0.5);">Processing new photo...</p>
+                </div>
+            </div>
+        `;
+        
+        // Clear any existing content and add placeholder at the top
+        this.photoGallery.innerHTML = '';
+        this.photoGallery.appendChild(placeholder);
     }
 
     handleExpiryChange() {
@@ -600,6 +634,9 @@ class ExpiringPhotosApp {
             const photoCard = this.createPhotoCard(photo);
             this.photoGallery.appendChild(photoCard);
         });
+        
+        // Reset the flag after photos are displayed
+        this.justCapturedPhoto = false;
     }
 
     formatRelativeTime(timestamp) {
