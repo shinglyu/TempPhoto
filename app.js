@@ -273,44 +273,79 @@ class ExpiringPhotosApp {
             // Schedule service worker registration after camera is ready
             this.scheduleServiceWorkerRegistration();
         } catch (error) {
-            console.error('Error accessing camera:', error);
-            // Try fallback if current mode fails
-            if (this.currentCameraMode !== 'standard') {
-                console.log('Falling back to standard camera');
-                this.currentCameraMode = 'standard';
-                this.currentModeIndex = 0;
-                this.initializeCamera();
-            } else {
-                alert('Unable to access camera. Please ensure you have granted camera permissions.');
+            console.error('Error accessing camera with high resolution:', error);
+            
+            // Try fallback with lower resolution if high-res fails
+            try {
+                console.log('Trying fallback resolution...');
+                const fallbackConstraints = this.getFallbackConstraints();
+                const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                this.video.srcObject = stream;
+                this.stream = stream;
+                this.updateCameraToggleButton();
+                this.scheduleServiceWorkerRegistration();
+                console.log('Fallback camera initialized successfully');
+            } catch (fallbackError) {
+                console.error('Fallback camera also failed:', fallbackError);
+                // Try switching camera mode if current mode fails
+                if (this.currentCameraMode !== 'standard') {
+                    console.log('Falling back to standard camera mode');
+                    this.currentCameraMode = 'standard';
+                    this.currentModeIndex = 0;
+                    this.initializeCamera();
+                } else {
+                    alert('Unable to access camera. Please ensure you have granted camera permissions.');
+                }
             }
         }
     }
 
     getCameraConstraints() {
-        const constraints = {
-            video: {}
+        const baseConstraints = {
+            video: {
+                width: { ideal: 2560 },
+                height: { ideal: 1440 }
+            }
         };
 
         switch (this.currentCameraMode) {
             case 'standard':
-                constraints.video = {
-                    facingMode: 'environment'
-                };
+                baseConstraints.video.facingMode = 'environment';
                 break;
             case 'wide':
-                constraints.video = {
-                    facingMode: 'environment',
-                    zoom: { ideal: 0.5 }
-                };
+                baseConstraints.video.facingMode = 'environment';
+                // Note: Wide-angle functionality can be enhanced in the future
+                // by detecting multiple cameras and selecting ultra-wide if available
                 break;
             case 'front':
-                constraints.video = {
-                    facingMode: 'user'
-                };
+                baseConstraints.video.facingMode = 'user';
                 break;
         }
 
-        return constraints;
+        return baseConstraints;
+    }
+
+    getFallbackConstraints() {
+        const fallbackConstraints = {
+            video: {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            }
+        };
+
+        switch (this.currentCameraMode) {
+            case 'standard':
+                fallbackConstraints.video.facingMode = 'environment';
+                break;
+            case 'wide':
+                fallbackConstraints.video.facingMode = 'environment';
+                break;
+            case 'front':
+                fallbackConstraints.video.facingMode = 'user';
+                break;
+        }
+
+        return fallbackConstraints;
     }
 
     async toggleCamera() {
