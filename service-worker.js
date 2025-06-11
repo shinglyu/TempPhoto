@@ -1,5 +1,5 @@
 // Dynamic cache versioning - update this timestamp when deploying
-const CACHE_VERSION = "20250611-1"
+const CACHE_VERSION = "20250611-2"
 const CACHE_NAME = `expiring-photos-v${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
     './',
