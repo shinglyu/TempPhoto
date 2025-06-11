@@ -35,3 +35,32 @@ Check out the live demo here: [Demo Link](https://shinglyu.com/TempPhoto/)
 - Stores photos in IndexedDB (with base64 encoding)
 - Implements PWA features for offline use
 - Built with vanilla JavaScript, HTML, and CSS
+
+## PWA Updates
+
+This app implements a cache-first strategy with background updates for optimal performance:
+
+### How Updates Work
+
+1. **Fast Initial Load**: App loads instantly from cache (camera ready immediately)
+2. **Background Update Check**: After camera is ready, checks for updates without blocking user
+3. **Gentle Notification**: Shows subtle update notification if new version is available
+4. **User Choice**: Users can continue using current version or apply updates when convenient
+
+### For Developers
+
+When deploying a new version:
+
+1. Run the deployment script: `./deploy.sh`
+2. This automatically updates the cache version in `service-worker.js`
+3. Deploy the updated files to your server
+4. Users will see update notifications after their camera loads
+
+### Cache Strategy
+
+- **Assets (CSS, JS, images)**: Cache-first for instant loading
+- **HTML files**: Cache-first with background network check
+- **Automatic Cache Cleanup**: Old cache versions are automatically removed
+- **Fallback Support**: Works offline even during updates
+
+The update system ensures users always get the latest features while maintaining fast, reliable performance.

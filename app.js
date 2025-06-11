@@ -381,9 +381,154 @@ class ExpiringPhotosApp {
         if ('serviceWorker' in navigator) {
             setTimeout(() => {
                 navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => console.log('ServiceWorker registered'))
+                    .then(registration => {
+                        console.log('ServiceWorker registered');
+                        // Check for updates after camera is ready and service worker is registered
+                        this.checkForUpdatesAfterCameraReady();
+                    })
                     .catch(error => console.log('ServiceWorker registration failed:', error));
             }, 100);
+        }
+    }
+
+    async checkForUpdatesAfterCameraReady() {
+        // Wait a bit more to ensure camera is fully ready
+        setTimeout(async () => {
+            try {
+                console.log('[App] Checking for PWA updates...');
+                const hasUpdate = await this.checkForAppUpdate();
+                if (hasUpdate) {
+                    this.showUpdateNotification();
+                }
+            } catch (error) {
+                console.error('[App] Error checking for updates:', error);
+            }
+        }, 2000); // 2 seconds after camera is ready
+    }
+
+    async checkForAppUpdate() {
+        if (!('serviceWorker' in navigator)) {
+            return false;
+        }
+
+        try {
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (!registration) {
+                return false;
+            }
+
+            // Check if there's already a waiting service worker
+            if (registration.waiting) {
+                console.log('[App] Update available (waiting worker)');
+                return true;
+            }
+
+            // Force check for updates
+            await registration.update();
+            
+            if (registration.waiting) {
+                console.log('[App] Update available after check');
+                return true;
+            }
+
+            console.log('[App] No updates available');
+            return false;
+        } catch (error) {
+            console.error('[App] Error checking for updates:', error);
+            return false;
+        }
+    }
+
+    showUpdateNotification() {
+        // Create a subtle notification that doesn't interrupt camera usage
+        const notification = document.createElement('div');
+        notification.id = 'updateNotification';
+        notification.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 1rem;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 150, 255, 0.9);
+                color: white;
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                font-size: 0.9rem;
+                animation: slideDown 0.3s ease-out;
+            ">
+                <span>📱 App update available</span>
+                <button onclick="window.app.applyUpdate()" style="
+                    background: white;
+                    color: #0096ff;
+                    border: none;
+                    padding: 0.4rem 0.8rem;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 0.8rem;
+                    font-weight: 500;
+                ">Update</button>
+                <button onclick="window.app.dismissUpdateNotification()" style="
+                    background: none;
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                    opacity: 0.8;
+                    padding: 0.4rem;
+                ">✕</button>
+            </div>
+        `;
+
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(notification);
+        
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+            this.dismissUpdateNotification();
+        }, 10000);
+    }
+
+    async applyUpdate() {
+        try {
+            console.log('[App] Applying update...');
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (registration && registration.waiting) {
+                // Tell the waiting service worker to skip waiting
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                
+                // Listen for the new service worker to take control
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    console.log('[App] New service worker active, reloading...');
+                    window.location.reload();
+                });
+            }
+        } catch (error) {
+            console.error('[App] Error applying update:', error);
+            // Fallback: just reload the page
+            window.location.reload();
+        }
+    }
+
+    dismissUpdateNotification() {
+        const notification = document.getElementById('updateNotification');
+        if (notification) {
+            notification.style.animation = 'slideDown 0.3s ease-out reverse';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
         }
     }
 
@@ -601,5 +746,5 @@ class ExpiringPhotosApp {
 
 // Initialize the app when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new ExpiringPhotosApp();
+    window.app = new ExpiringPhotosApp();
 });
