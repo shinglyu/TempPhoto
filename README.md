@@ -51,10 +51,9 @@ This app implements a cache-first strategy with background updates for optimal p
 
 When deploying a new version:
 
-1. Run the deployment script: `./deploy.sh`
-2. This automatically updates the cache version in `service-worker.js`
-3. Deploy the updated files to your server
-4. Users will see update notifications after their camera loads
+1. Update the cache version in `service-worker.js`
+1. Deploy the updated files to your server
+1. Users will see update notifications after their camera loads
 
 ### Cache Strategy
 
