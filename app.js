@@ -251,13 +251,6 @@ class ExpiringPhotosApp {
                     this.closeFullscreenViewer();
                 }
             });
-
-            // Handle escape key
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.fullscreenViewer.classList.contains('active')) {
-                    this.closeFullscreenViewer();
-                }
-            });
         }
 
         // Set minimum date-time for custom expiry
@@ -287,7 +280,6 @@ class ExpiringPhotosApp {
             
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.video.srcObject = stream;
-            this.stream = stream;
 
             // Detect unexpected camera loss (e.g. system revokes access).
             // Store the handler so it can be removed on intentional stop.
@@ -310,7 +302,6 @@ class ExpiringPhotosApp {
                 const fallbackConstraints = this.getFallbackConstraints();
                 const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
                 this.video.srcObject = stream;
-                this.stream = stream;
 
                 // Detect unexpected camera loss on fallback stream too.
                 // Store the handler so it can be removed on intentional stop.
@@ -359,7 +350,6 @@ class ExpiringPhotosApp {
     handleCameraTrackEnded() {
         console.warn('Camera track ended unexpectedly, attempting to reacquire...');
         this.video.srcObject = null;
-        this.stream = null;
         this.scheduleCameraRetry(ExpiringPhotosApp.TRACK_ENDED_RETRY_DELAY_MS);
     }
 
@@ -781,7 +771,7 @@ class ExpiringPhotosApp {
         return card;
     }
 
-    async downloadPhoto(photo) {
+    downloadPhoto(photo) {
         const link = document.createElement('a');
         link.href = photo.data;
         link.download = `photo-${new Date(photo.timestamp).toISOString()}.jpg`;
