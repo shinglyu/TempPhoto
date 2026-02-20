@@ -1,4 +1,7 @@
 class ExpiringPhotosApp {
+    static CAMERA_RETRY_DELAY_MS = 2000;
+    static TRACK_ENDED_RETRY_DELAY_MS = 1000;
+
     constructor() {
         this.DB_NAME = 'TempPhotoDB';
         this.STORE_NAME = 'photos';
@@ -11,6 +14,11 @@ class ExpiringPhotosApp {
         this.currentCameraMode = 'back';
         this.cameraModes = ['back', 'front'];
         this.currentModeIndex = 0;
+
+        // Camera acquisition state
+        this.cameraInitializing = false;
+        this.cameraRetryTimeout = null;
+        this.cameraTrackEndedHandler = null;
         
         // Initialize critical path immediately (non-blocking)
         this.initializeElements();
@@ -258,6 +266,18 @@ class ExpiringPhotosApp {
     }
 
     async initializeCamera() {
+        // Prevent concurrent initialization attempts
+        if (this.cameraInitializing) {
+            return;
+        }
+        this.cameraInitializing = true;
+
+        // Clear any pending retry so it doesn't fire on top of this attempt
+        if (this.cameraRetryTimeout) {
+            clearTimeout(this.cameraRetryTimeout);
+            this.cameraRetryTimeout = null;
+        }
+
         try {
             // Stop current camera stream before switching
             this.stopCamera();
@@ -268,6 +288,13 @@ class ExpiringPhotosApp {
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.video.srcObject = stream;
             this.stream = stream;
+
+            // Detect unexpected camera loss (e.g. system revokes access).
+            // Store the handler so it can be removed on intentional stop.
+            this.cameraTrackEndedHandler = () => this.handleCameraTrackEnded();
+            stream.getVideoTracks().forEach(track => {
+                track.addEventListener('ended', this.cameraTrackEndedHandler);
+            });
             
             // Update button text after successful camera initialization
             this.updateCameraToggleButton();
@@ -284,6 +311,14 @@ class ExpiringPhotosApp {
                 const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
                 this.video.srcObject = stream;
                 this.stream = stream;
+
+                // Detect unexpected camera loss on fallback stream too.
+                // Store the handler so it can be removed on intentional stop.
+                this.cameraTrackEndedHandler = () => this.handleCameraTrackEnded();
+                stream.getVideoTracks().forEach(track => {
+                    track.addEventListener('ended', this.cameraTrackEndedHandler);
+                });
+
                 this.updateCameraToggleButton();
                 this.scheduleServiceWorkerRegistration();
                 console.log('Fallback camera initialized successfully');
@@ -294,12 +329,38 @@ class ExpiringPhotosApp {
                     console.log('Falling back to back camera mode');
                     this.currentCameraMode = 'back';
                     this.currentModeIndex = 0;
+                    this.cameraInitializing = false;
                     this.initializeCamera();
+                    return;
                 } else {
-                    alert('Unable to access camera. Please ensure you have granted camera permissions.');
+                    // Schedule a retry rather than giving up immediately
+                    this.scheduleCameraRetry();
                 }
             }
+        } finally {
+            this.cameraInitializing = false;
         }
+    }
+
+    scheduleCameraRetry(delay = ExpiringPhotosApp.CAMERA_RETRY_DELAY_MS) {
+        // Only retry if the camera view is active and the page is visible
+        if (!this.cameraView.classList.contains('active') || document.hidden) {
+            return;
+        }
+        console.log(`Camera unavailable, retrying in ${delay}ms...`);
+        this.cameraRetryTimeout = setTimeout(() => {
+            this.cameraRetryTimeout = null;
+            if (this.cameraView.classList.contains('active') && !document.hidden) {
+                this.initializeCamera();
+            }
+        }, delay);
+    }
+
+    handleCameraTrackEnded() {
+        console.warn('Camera track ended unexpectedly, attempting to reacquire...');
+        this.video.srcObject = null;
+        this.stream = null;
+        this.scheduleCameraRetry(ExpiringPhotosApp.TRACK_ENDED_RETRY_DELAY_MS);
     }
 
     getCameraConstraints() {
@@ -728,10 +789,22 @@ class ExpiringPhotosApp {
     }
 
     stopCamera() {
+        // Cancel any pending retry so we don't restart a deliberately stopped camera
+        if (this.cameraRetryTimeout) {
+            clearTimeout(this.cameraRetryTimeout);
+            this.cameraRetryTimeout = null;
+        }
         if (this.video.srcObject) {
             const tracks = this.video.srcObject.getTracks();
-            tracks.forEach(track => track.stop());
+            tracks.forEach(track => {
+                // Remove listener before stopping to avoid triggering handleCameraTrackEnded
+                if (this.cameraTrackEndedHandler) {
+                    track.removeEventListener('ended', this.cameraTrackEndedHandler);
+                }
+                track.stop();
+            });
             this.video.srcObject = null;
+            this.cameraTrackEndedHandler = null;
         }
     }
 
@@ -747,10 +820,17 @@ class ExpiringPhotosApp {
     }
 
     handleFocus() {
-        // Only restart camera if we're in camera view
-        if (this.cameraView.classList.contains('active')) {
+        // Only restart camera if we're in camera view and the stream is not already active
+        if (this.cameraView.classList.contains('active') && !this.isCameraStreamActive()) {
             this.initializeCamera();
         }
+    }
+
+    isCameraStreamActive() {
+        return !!(
+            this.video.srcObject &&
+            this.video.srcObject.getVideoTracks().some(t => t.readyState === 'live')
+        );
     }
 
     openFullscreenViewer(imageData) {
