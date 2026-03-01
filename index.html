@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>TempPhoto</title>
     <link rel="manifest" href="manifest.json">
     
@@ -11,12 +11,12 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #000; color: #fff; height: 100vh; width: 100vw; overflow: hidden; 
+            background-color: #000; color: #fff; height: 100vh; height: 100dvh; width: 100vw; overflow: hidden; 
         }
         .icon { font-style: normal; line-height: 1; display: inline-block; user-select: none; }
-        .app-container { height: 100vh; width: 100vw; display: flex; flex-direction: column; }
+        .app-container { height: 100vh; height: 100dvh; width: 100vw; display: flex; flex-direction: column; }
         .main-nav { 
-            background-color: #1a1a1a; padding: 1rem; display: flex; align-items: center; 
+            background-color: #1a1a1a; padding-top: 1rem; padding-left: 1rem; padding-right: 1rem; padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; 
             position: relative; order: 2; 
         }
         .nav-buttons { display: flex; gap: 1rem; margin: 0 auto; }

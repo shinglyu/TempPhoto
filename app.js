@@ -83,6 +83,8 @@ class ExpiringPhotosApp {
     }
 
     async capturePhoto() {
+        // Prevent double-captures while a save is in progress
+        this.captureButton.disabled = true;
         try {
             // Ensure database is ready before saving
             if (!this.db) {
@@ -93,6 +95,13 @@ class ExpiringPhotosApp {
                     alert('Unable to save photo - database not available. Please try again.');
                     return;
                 }
+            }
+
+            // Validate custom expiry before capturing
+            const expiryDate = this.getExpiryDate();
+            if (expiryDate !== null && typeof expiryDate === 'object' && expiryDate.error) {
+                alert(expiryDate.error);
+                return;
             }
 
             // Set canvas size to match video dimensions
@@ -107,10 +116,10 @@ class ExpiringPhotosApp {
             const imageData = this.canvas.toDataURL('image/jpeg', 0.95);
 
             const photo = {
-                id: Date.now().toString(),
+                id: crypto.randomUUID(),
                 data: imageData,
                 timestamp: Date.now(),
-                expiryDate: this.getExpiryDate()
+                expiryDate
             };
 
             await this.savePhoto(photo);
@@ -124,6 +133,8 @@ class ExpiringPhotosApp {
         } catch (error) {
             console.error('Error saving photo:', error);
             alert(error.message || 'Failed to save photo. Please delete some photos and try again.');
+        } finally {
+            this.captureButton.disabled = false;
         }
     }
 
@@ -144,14 +155,14 @@ class ExpiringPhotosApp {
         });
     }
 
-    async deletePhotoFromDB(id) {
+    async deletePhotoFromDB(id, reload = true) {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
             const store = transaction.objectStore(this.STORE_NAME);
             const request = store.delete(id);
 
             request.onsuccess = () => {
-                this.loadPhotos();
+                if (reload) this.loadPhotos();
                 resolve();
             };
 
@@ -176,10 +187,15 @@ class ExpiringPhotosApp {
         
         for (const photo of expired) {
             try {
-                await this.deletePhotoFromDB(photo.id);
+                await this.deletePhotoFromDB(photo.id, false);
             } catch (error) {
                 console.error('Error deleting expired photo:', error);
             }
+        }
+
+        // Reload gallery once after all expired photos are removed
+        if (expired.length > 0) {
+            this.loadPhotos();
         }
     }
 
@@ -525,15 +541,18 @@ class ExpiringPhotosApp {
             </div>
         `;
 
-        // Add animation styles
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideDown {
-                from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
-                to { transform: translateX(-50%) translateY(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
+        // Add animation styles (only once)
+        if (!document.getElementById('updateNotificationStyles')) {
+            const style = document.createElement('style');
+            style.id = 'updateNotificationStyles';
+            style.textContent = `
+                @keyframes slideDown {
+                    from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
 
         document.body.appendChild(notification);
         
@@ -672,7 +691,14 @@ class ExpiringPhotosApp {
     getExpiryDate() {
         const selectedValue = this.expirySelect.value;
         if (selectedValue === 'custom') {
-            return new Date(this.customExpiry.value).getTime();
+            if (!this.customExpiry.value) {
+                return { error: 'Please select a date and time for photo expiration.' };
+            }
+            const ts = new Date(this.customExpiry.value).getTime();
+            if (isNaN(ts)) {
+                return { error: 'The selected date and time is invalid. Please choose a valid expiry.' };
+            }
+            return ts;
         } else {
             return Date.now() + parseInt(selectedValue);
         }
@@ -680,6 +706,12 @@ class ExpiringPhotosApp {
 
     displayPhotos(photos) {
         this.photoGallery.innerHTML = '';
+
+        if (photos.length === 0) {
+            this.photoGallery.innerHTML = '<p class="gallery-empty-state">No photos yet. Take your first photo!</p>';
+            this.justCapturedPhoto = false;
+            return;
+        }
 
         photos.sort((a, b) => b.timestamp - a.timestamp).forEach(photo => {
             const photoCard = this.createPhotoCard(photo);
@@ -734,6 +766,8 @@ class ExpiringPhotosApp {
         const img = document.createElement('img');
         img.src = photo.data;
         img.alt = 'Captured photo';
+        img.loading = 'lazy';
+        img.decoding = 'async';
         if (this.fullscreenViewer) {
             img.addEventListener('click', () => this.openFullscreenViewer(photo.data));
         }
@@ -775,7 +809,9 @@ class ExpiringPhotosApp {
         const link = document.createElement('a');
         link.href = photo.data;
         link.download = `photo-${new Date(photo.timestamp).toISOString()}.jpg`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     }
 
     stopCamera() {
